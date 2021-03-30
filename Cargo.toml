@@ -1,0 +1,11 @@
+[package]
+name = "compressed-sparse-fiber"
+version = "0.0.1"
+authors = ["Steven Spencer <steven.spencer@iki.fi>"]
+edition = "2018"
+license-file = "LICENSE.txt"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+sequence_trie = "0.3.6"
