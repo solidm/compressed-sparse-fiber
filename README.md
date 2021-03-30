@@ -1,4 +1,4 @@
-# compressed-sparse-filter
+# compressed-sparse-fiber
 CSF is a generalization of compressed sparse row (CSR) index.
 See [smith2017knl](http://shaden.io/pub-files/smith2017knl.pdf)
 
