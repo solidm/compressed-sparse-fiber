@@ -21,7 +21,7 @@ let rows = vec![
     (vec![2, 2, 2, 3], 8.0),
 ];
 
-let csf = CompressedSparseFiber::from(&rows)                       // main.rs:8 ❯ x = [1, 2, 3]
+let csf = CompressedSparseFiber::from(&rows)                       
 ```
 
 The above could be represented by a structure like this:
