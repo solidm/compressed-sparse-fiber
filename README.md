@@ -33,6 +33,28 @@ CompressedSparseFiber {
 }
 ```
 
+A CSF can also be built incrementally:
+```rust
+let rows = vec![
+    (vec![1, 1, 1, 2], 1.0),
+    (vec![1, 1, 1, 3], 2.0),
+    (vec![1, 2, 1, 1], 3.0),
+    (vec![1, 2, 1, 3], 4.0),
+    (vec![1, 2, 2, 1], 5.0),
+    (vec![2, 2, 2, 1], 6.0),
+    (vec![2, 2, 2, 2], 7.0),
+    (vec![2, 2, 2, 3], 8.0),
+];
+
+let mut builder: CompressedSparseFiberBuilder<_, _> = CompressedSparseFiberBuilder::new();
+
+for (row, v) in rows {
+    builder.rows.insert(&row, v);
+}
+
+let csf = builder.build();                 
+```
+
 ### Retreiving in uncompressed form 
 
 ```rust
@@ -44,5 +66,5 @@ for t in csf {
 ### References
  - [Apache Arrow](https://github.com/apache/arrow/blob/master/format/SparseTensor.fbs)
  - [smith2017knl](http://shaden.io/pub-files/smith2017knl.pdf) 
-
+ - [Tensor-Matrix Products with a Compressed Sparse Tensor](https://www.researchgate.net/publication/283457552_Tensor-Matrix_Products_with_a_Compressed_Sparse_Tensor)
 

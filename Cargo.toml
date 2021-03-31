@@ -1,9 +1,9 @@
 [package]
 name = "compressed-sparse-fiber"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Steven Spencer <steven.spencer@iki.fi>"]
 edition = "2018"
-license-file = "LICENSE.txt"
+license = "Apache-2.0"
 description = "Compressed sparse filter implementation for Rust"
 repository = "https://github.com/solidm/compressed-sparse-fiber"
 
