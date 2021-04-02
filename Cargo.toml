@@ -10,4 +10,4 @@ repository = "https://github.com/solidm/compressed-sparse-fiber"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-sequence_trie = "0.3.6"
+sequence_trie = { version = "0.3.6", features = ["btreemap"] }

@@ -19,7 +19,7 @@ impl<T, U> CompressedSparseFiberBuilder<T, U>
     }
 
     fn build(self) -> CompressedSparseFiber<T, U>
-        where U: Eq + Hash + Clone + Copy+ Ord, T: Copy
+        where U: Eq + Hash + Clone + Copy + Ord, T: Copy
     {
         CompressedSparseFiber::from(&self.rows)
     }
