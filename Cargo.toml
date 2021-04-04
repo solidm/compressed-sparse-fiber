@@ -4,7 +4,7 @@ version = "0.0.3"
 authors = ["Steven Spencer <steven.spencer@iki.fi>"]
 edition = "2018"
 license = "Apache-2.0"
-description = "Compressed sparse filter implementation for Rust"
+description = "Compressed sparse fiber implementation for Rust"
 repository = "https://github.com/solidm/compressed-sparse-fiber"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

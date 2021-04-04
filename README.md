@@ -1,4 +1,10 @@
-# compressed-sparse-fiber
+compressed-sparse-fiber
+=========
+
+[![Build Status](https://travis-ci.com/solidm/compressed-sparse-fiber.svg?branch=master)](https://travis-ci.com/rust-lang/compressed-sparse-fiber)
+[![Crates.io](https://img.shields.io/crates/v/compressed-sparse-fiber.svg)](https://crates.io/crates/compressed-sparse-fiber)
+[![Documentation](https://docs.rs/compressed-sparse-fiber/badge.svg)](https://docs.rs/compressed-sparse-fiber)
+
 CSF is a generalization of compressed sparse row (CSR) index.
 See [smith2017knl](http://shaden.io/pub-files/smith2017knl.pdf)
 
