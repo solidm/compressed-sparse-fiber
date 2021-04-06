@@ -108,7 +108,7 @@ impl<T, U> From<&SequenceTrie<U, T>> for CompressedSparseFiber<T, U>
                 })
                 .unzip();
             if !keys.is_empty() {
-                let row = keys.into_iter().map(|f| *f).collect();
+                let row = keys.into_iter().map(|&f| f).collect();
                 fids.push(row);
                 if !initial {
                     fptr.push(fptr_row);
@@ -119,7 +119,7 @@ impl<T, U> From<&SequenceTrie<U, T>> for CompressedSparseFiber<T, U>
 
             let mut values: Vec<T> = children.iter()
                 .filter_map(|x| x.value())
-                .map(|x| *x)
+                .map(|&x| x)
                 .collect::<Vec<_>>();
             vals.append(&mut values);
             i = children
