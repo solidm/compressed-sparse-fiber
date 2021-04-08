@@ -1,6 +1,7 @@
 use std::hash::Hash;
 use sequence_trie::SequenceTrie;
 use std::collections::hash_map::RandomState;
+use std::iter::Sum;
 
 type Row<T, U> = (Vec<U>, T);
 type Rows<T, U> = Vec<Row<T, U>>;
@@ -11,14 +12,13 @@ pub struct CompressedSparseFiberBuilder<T, U>
     rows: SequenceTrie<U, T>
 }
 
-#[allow(dead_code)]
 impl<T, U> CompressedSparseFiberBuilder<T, U>
     where U: Eq + Hash + Clone + Ord {
-    fn new() -> CompressedSparseFiberBuilder<T, U> {
+    pub fn new() -> CompressedSparseFiberBuilder<T, U> {
         CompressedSparseFiberBuilder { rows: SequenceTrie::new() }
     }
 
-    fn build(self) -> CompressedSparseFiber<T, U>
+    pub fn build(self) -> CompressedSparseFiber<T, U>
         where U: Eq + Hash + Clone + Copy + Ord, T: Copy
     {
         CompressedSparseFiber::from(&self.rows)
@@ -46,8 +46,8 @@ pub struct CompressedSparseFiber<T, U> {
     _state: IteratorState,
 }
 
-impl<T, U> CompressedSparseFiber<T, U> where U: Clone {
-    fn new(fptr: Vec<Vec<usize>>,
+impl<'a, T: 'a, U> CompressedSparseFiber<T, U> where U: Clone {
+    pub fn new(fptr: Vec<Vec<usize>>,
            fids: Vec<Vec<U>>,
            vals: Vec<T>) -> CompressedSparseFiber<T, U> {
         CompressedSparseFiber { fptr, fids, vals, _state: IteratorState { next_index: 0 } }
@@ -83,12 +83,51 @@ impl<T, U> CompressedSparseFiber<T, U> where U: Clone {
         result.reverse();
         (result, val)
     }
+
+    fn weights(self: &CompressedSparseFiber<T, U>, col_index: usize) -> Vec<usize> {
+
+        fn combine(current_weights: Vec<usize>, fptr_row: Vec<usize>) -> Vec<usize> {
+            let tail = &fptr_row[1..];
+            fptr_row.iter()
+                .zip(tail)
+                .map(|(&i,&j)| &current_weights[i..j])
+                .map(|x|x.iter().sum::<usize>())
+                .collect::<Vec<_>>()
+        }
+
+        let fptr_row = &self.fptr[self.fptr.len() - 1];
+        let tail = &fptr_row[1..];
+        let initial = fptr_row.iter()
+            .zip(tail)
+            .map(|(&x, &y)| y - x)
+            .collect::<Vec<_>>();
+
+        (&self.fptr[col_index..self.fptr.len() - 1])
+            .iter()
+            .rfold(initial, |w, f| combine(w, f.to_vec()))
+    }
+
+    pub fn sum_column(self: &CompressedSparseFiber<T, U>, col_index: usize) -> U
+        where T: Copy, U: Sum<U> + Copy {
+        let row = self.fids[col_index].clone();
+
+        if col_index == self.fptr.len() {
+            row.into_iter().sum::<U>()
+        } else {
+            let w = self.weights(col_index);
+            // Repeat and take to avoid Mul<usize, Output = U> constraint
+            row.iter()
+                .zip(w)
+                .map(|(&x,y)| std::iter::repeat(x).take(y).sum())
+                .sum::<U>()
+        }
+    }
 }
 
 impl<T, U> From<&SequenceTrie<U, T>> for CompressedSparseFiber<T, U>
     where T: Copy,
           U: Clone + Eq + Hash + Ord + Copy {
-    fn from(trie: &SequenceTrie<U, T, RandomState>) -> Self {
+   fn from(trie: &SequenceTrie<U, T, RandomState>) -> Self {
         let mut i = vec![trie];
         let mut fids: Vec<Vec<U>> = vec![];
         let mut fptr = vec![];
@@ -140,7 +179,8 @@ impl<T, U> From<&Rows<T, U>> for CompressedSparseFiber<T, U>
     }
 }
 
-impl<T, U> Iterator for CompressedSparseFiber<T, U> where T: Copy, U: Clone + Copy {
+impl<T, U> Iterator for CompressedSparseFiber<T, U>
+    where T: Copy, U: Clone + Copy {
     type Item = Row<T, U>;
 
     fn next(&mut self) -> Option<Row<T, U>> {
@@ -171,6 +211,14 @@ mod tests {
         ]
     }
 
+    fn sample_csf() -> CompressedSparseFiber<f32, i32> {
+        CompressedSparseFiber::new(
+            vec![vec![0, 2, 3], vec![0, 1, 3, 4], vec![0, 2, 4, 5, 8]],
+            vec![vec![1, 2], vec![1, 2, 2], vec![1, 1, 2, 2], vec![2, 3, 1, 3, 1, 1, 2, 3]],
+            vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],
+        )
+    }
+
     #[test]
     fn test_build() {
         let rows = sample_rows();
@@ -190,11 +238,7 @@ mod tests {
 
     #[test]
     fn test_expand_row() {
-        let x = CompressedSparseFiber::new(
-            vec![vec![0, 2, 3], vec![0, 1, 3, 4], vec![0, 2, 4, 5, 8]],
-            vec![vec![1, 2], vec![1, 2, 2], vec![1, 1, 2, 2], vec![2, 3, 1, 3, 1, 1, 2, 3]],
-            vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],
-        );
+        let x = sample_csf();
 
         let (key, val) = x.expand_row(0);
         assert_eq!(key, vec![1, 1, 1, 2]);
@@ -236,5 +280,24 @@ mod tests {
                 .find(|(vector, _)| vector == &vec_out).unwrap();
             assert_eq!(value, val_out);
         }
+    }
+
+    fn expected_sum(rows: &Rows<f32, i32>, col_index: usize) -> i32 {
+        let mut result = 0;
+        for (row, _) in rows {
+            result += row[col_index];
+        }
+        result
+    }
+
+    #[test]
+    fn test_sum() {
+        let x = sample_csf();
+        let rows = sample_rows();
+
+        assert_eq!(expected_sum(&rows, 0), x.sum_column(0));
+        assert_eq!(expected_sum(&rows, 1), x.sum_column(1));
+        assert_eq!(expected_sum(&rows, 2), x.sum_column(2));
+        assert_eq!(expected_sum(&rows, 3), x.sum_column(3));
     }
 }
