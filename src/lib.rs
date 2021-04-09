@@ -46,7 +46,8 @@ pub struct CompressedSparseFiber<T, U> {
     _state: IteratorState,
 }
 
-impl<'a, T: 'a, U> CompressedSparseFiber<T, U> where U: Clone {
+impl<'a, T: 'a, U> CompressedSparseFiber<T, U>
+    where U: Clone {
     pub fn new(fptr: Vec<Vec<usize>>,
            fids: Vec<Vec<U>>,
            vals: Vec<T>) -> CompressedSparseFiber<T, U> {
@@ -64,7 +65,8 @@ impl<'a, T: 'a, U> CompressedSparseFiber<T, U> where U: Clone {
     }
 
     fn expand_row(self: &CompressedSparseFiber<T, U>, index: usize) -> Row<T, U>
-        where T: Copy, U: Copy {
+        where T: Copy,
+              U: Copy {
         let val = self.vals[index];
         let depth = self.fids.len();
 
@@ -108,7 +110,8 @@ impl<'a, T: 'a, U> CompressedSparseFiber<T, U> where U: Clone {
     }
 
     pub fn sum_column(self: &CompressedSparseFiber<T, U>, col_index: usize) -> U
-        where T: Copy, U: Sum<U> + Copy {
+        where T: Copy,
+              U: Sum<U> + Copy {
         let row = self.fids[col_index].clone();
 
         if col_index == self.fptr.len() {
@@ -180,7 +183,8 @@ impl<T, U> From<&Rows<T, U>> for CompressedSparseFiber<T, U>
 }
 
 impl<T, U> Iterator for CompressedSparseFiber<T, U>
-    where T: Copy, U: Clone + Copy {
+    where T: Copy,
+          U: Clone + Copy {
     type Item = Row<T, U>;
 
     fn next(&mut self) -> Option<Row<T, U>> {
