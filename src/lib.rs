@@ -189,7 +189,7 @@ impl<T, U> Iterator for CompressedSparseFiber<T, U>
 
     fn next(&mut self) -> Option<Row<T, U>> {
         self._state.next_index += 1;
-        if self._state.next_index <= self.vals.len() {
+        if self._state.next_index < self.vals.len() {
             Some(self.expand_row(self._state.next_index - 1))
         } else {
             None
