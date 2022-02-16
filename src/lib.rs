@@ -40,9 +40,9 @@ impl Default for IteratorState {
 
 #[derive(Debug, Clone)]
 pub struct CompressedSparseFiber<T, U> {
-    fptr: Vec<Vec<usize>>,
-    fids: Vec<Vec<U>>,
-    vals: Vec<T>,
+    pub fptr: Vec<Vec<usize>>,
+    pub fids: Vec<Vec<U>>,
+    pub vals: Vec<T>,
     _state: IteratorState,
 }
 
@@ -63,7 +63,7 @@ impl<'a, T: 'a, U> CompressedSparseFiber<T, U> where U: Clone {
         None
     }
 
-    fn expand_row(self: &CompressedSparseFiber<T, U>, index: usize) -> Row<T, U>
+    pub fn expand_row(self: &CompressedSparseFiber<T, U>, index: usize) -> Row<T, U>
         where T: Copy, U: Copy {
         let val = self.vals[index];
         let depth = self.fids.len();
