@@ -59,20 +59,17 @@ impl<'a, T: 'a, U> CompressedSparseFiber<T, U>
     fn expand_row(self: &CompressedSparseFiber<T, U>, index: usize) -> Row<T, U>
         where T: Copy,
               U: Copy {
-        let val = self.vals[index];
         let depth = self.fids.len();
-
         // The last row has the same length as vals
         let mut result = vec![self.fids[depth - 1][index]];
         let mut current_index = index;
-        // He's working from the bottom up? -> rev
         for level in (0..depth - 1).rev() {
             let j = self.fptr[level].partition_point(|v| v <= &current_index);
-            result.push(self.fids[level][j - 1].clone());
+            result.push(self.fids[level][j - 1]);
             current_index = j-1;
         }
         result.reverse();
-        (result, val)
+        (result, self.vals[index])
     }
 
     fn weights(self: &CompressedSparseFiber<T, U>, col_index: usize) -> Vec<usize> {
