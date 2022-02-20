@@ -1,3 +1,5 @@
+#![feature(partition_point)]
+
 use std::hash::Hash;
 use sequence_trie::SequenceTrie;
 use std::collections::hash_map::RandomState;
@@ -54,16 +56,6 @@ impl<'a, T: 'a, U> CompressedSparseFiber<T, U>
         CompressedSparseFiber { fptr, fids, vals, _state: IteratorState { next_index: 0 } }
     }
 
-    fn dim(self: &CompressedSparseFiber<T, U>, level: usize, index: usize) -> Option<(usize, U)> {
-        for j in 0..self.fptr[level].len() {
-            let v = self.fptr[level][j];
-            if v > index {
-                return Some((j - 1, self.fids[level][j - 1].clone()));
-            }
-        }
-        None
-    }
-
     fn expand_row(self: &CompressedSparseFiber<T, U>, index: usize) -> Row<T, U>
         where T: Copy,
               U: Copy {
@@ -73,14 +65,11 @@ impl<'a, T: 'a, U> CompressedSparseFiber<T, U>
         // The last row has the same length as vals
         let mut result = vec![self.fids[depth - 1][index]];
         let mut current_index = index;
-        for x in (0..depth - 1).rev() {
-            match self.dim(x, current_index) {
-                Some((new_index, node)) => {
-                    current_index = new_index;
-                    result.push(node);
-                }
-                None => ()
-            }
+        // He's working from the bottom up? -> rev
+        for level in (0..depth - 1).rev() {
+            let j = self.fptr[level].partition_point(|v| v <= &current_index);
+            result.push(self.fids[level][j - 1].clone());
+            current_index = j-1;
         }
         result.reverse();
         (result, val)
