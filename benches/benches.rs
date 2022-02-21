@@ -26,18 +26,24 @@ macro_rules! make_bench {
         mod $name {
             #[bench]
             fn expand_row(b: &mut super::Bencher) {
-                let csf = super::sample_csf(8, 1000000);
+                let csf = super::sample_csf(8, $count);
                 b.iter(|| {
-                     for x in (0..1000) {
+                     for x in (0..10) {
                         test::black_box(csf.expand_row(x));
                     }
+                });
+            }
+            #[bench]
+            fn sum_column(b: &mut super::Bencher) {
+                let csf = super::sample_csf(8, $count);
+                b.iter(|| {
+                    test::black_box(csf.sum_column(1));
                 });
             }
         }
     };
 }
 
-make_bench!(b01_ten, 10);
 make_bench!(b03_thousand, 1_000);
 make_bench!(b04_hundredthousand, 100_000);
 make_bench!(b05_million, 1_000_000);
