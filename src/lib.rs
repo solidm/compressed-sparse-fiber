@@ -9,7 +9,7 @@ type Rows<T, U> = Vec<Row<T, U>>;
 #[derive(Debug, Clone)]
 pub struct CompressedSparseFiberBuilder<T, U>
     where U: Eq + Hash + Ord {
-    rows: SequenceTrie<U, T>
+    pub rows: SequenceTrie<U, T>
 }
 
 impl<T, U> CompressedSparseFiberBuilder<T, U>
