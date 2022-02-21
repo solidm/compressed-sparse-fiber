@@ -38,18 +38,19 @@ impl<'a, T: 'a, U> CompressedSparseFiber<T, U>
 
     pub fn expand_row(self: &CompressedSparseFiber<T, U>, index: usize) -> Row<T, U>
         where T: Copy,
-              U: Copy {
+              U: Copy + Default {
         let depth = self.fids.len();
 
         // The last row has the same length as vals
-        let mut result = vec![self.fids[depth - 1][index]];
+        let mut result: Vec<U> = vec![Default::default(); depth];
+        let last = self.fids[depth - 1][index];
+        result[depth-1] = last;
         let mut current_index = index;
         for level in (0..depth - 1).rev() {
             let j = self.fptr[level].partition_point(|v| v <= &current_index);
-            result.push(self.fids[level][j - 1]);
+            result[level] = self.fids[level][j - 1];
             current_index = j-1;
         }
-        result.reverse();
         (result, self.vals[index])
     }
 
@@ -139,7 +140,7 @@ impl<T, U> From<&SequenceTrie<U, T>> for CompressedSparseFiber<T, U>
 
 impl<T, U> Iterator for CompressedSparseFiber<T, U>
     where T: Copy,
-          U: Clone + Copy {
+          U: Clone + Copy + Default + Default {
     type Item = Row<T, U>;
 
     fn next(&mut self) -> Option<Row<T, U>> {
