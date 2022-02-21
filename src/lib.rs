@@ -6,29 +6,8 @@ use sequence_trie::SequenceTrie;
 type Row<T, U> = (Vec<U>, T);
 type Rows<T, U> = Vec<Row<T, U>>;
 
-#[derive(Debug, Clone)]
-<<<<<<< HEAD
-pub struct CompressedSparseFiberBuilder<T, U>
-    where U: Eq + Hash + Ord {
-    pub rows: SequenceTrie<U, T>
-}
-
-impl<T, U> CompressedSparseFiberBuilder<T, U>
-    where U: Eq + Hash + Clone + Ord {
-    pub fn new() -> CompressedSparseFiberBuilder<T, U> {
-        CompressedSparseFiberBuilder { rows: SequenceTrie::new() }
-    }
-
-    pub fn build(self) -> CompressedSparseFiber<T, U>
-        where U: Eq + Hash + Clone + Copy + Ord, T: Copy
-    {
-        CompressedSparseFiber::from(&self.rows)
-    }
-}
 
 #[derive(Debug, Clone)]
-=======
->>>>>>> perf
 struct IteratorState {
     next_index: usize
 }

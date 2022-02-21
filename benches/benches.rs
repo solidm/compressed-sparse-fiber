@@ -28,12 +28,9 @@ macro_rules! make_bench {
             fn expand_row(b: &mut super::Bencher) {
                 let csf = super::sample_csf(8, 1000000);
                 b.iter(|| {
-                     let rng = rand::thread_rng();
                      for x in (0..1000) {
                         test::black_box(csf.expand_row(x));
                     }
-
-
                 });
             }
         }
