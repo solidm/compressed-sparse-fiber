@@ -35,7 +35,7 @@ impl<'a, T: 'a, U> CompressedSparseFiber<T, U>
         CompressedSparseFiber { fptr, fids, vals, _state: IteratorState { next_index: 0 } }
     }
 
-    fn expand_row(self: &CompressedSparseFiber<T, U>, index: usize) -> Row<T, U>
+    pub fn expand_row(self: &CompressedSparseFiber<T, U>, index: usize) -> Row<T, U>
         where T: Copy,
               U: Copy {
         let depth = self.fids.len();
