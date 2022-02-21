@@ -11,3 +11,6 @@ repository = "https://github.com/solidm/compressed-sparse-fiber"
 
 [dependencies]
 sequence_trie = { version = "0.3.6", features = ["btreemap"] }
+
+[dev-dependencies]
+rand = {verion="0.8.5"}

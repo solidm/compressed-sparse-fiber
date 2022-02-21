@@ -1,12 +1,13 @@
+
 use std::hash::Hash;
-use sequence_trie::SequenceTrie;
-use std::collections::hash_map::RandomState;
 use std::iter::Sum;
+use sequence_trie::SequenceTrie;
 
 type Row<T, U> = (Vec<U>, T);
 type Rows<T, U> = Vec<Row<T, U>>;
 
 #[derive(Debug, Clone)]
+<<<<<<< HEAD
 pub struct CompressedSparseFiberBuilder<T, U>
     where U: Eq + Hash + Ord {
     pub rows: SequenceTrie<U, T>
@@ -26,6 +27,8 @@ impl<T, U> CompressedSparseFiberBuilder<T, U>
 }
 
 #[derive(Debug, Clone)]
+=======
+>>>>>>> perf
 struct IteratorState {
     next_index: usize
 }
@@ -54,35 +57,21 @@ impl<'a, T: 'a, U> CompressedSparseFiber<T, U>
         CompressedSparseFiber { fptr, fids, vals, _state: IteratorState { next_index: 0 } }
     }
 
-    fn dim(self: &CompressedSparseFiber<T, U>, level: usize, index: usize) -> Option<(usize, U)> {
-        for j in 0..self.fptr[level].len() {
-            let v = self.fptr[level][j];
-            if v > index {
-                return Some((j - 1, self.fids[level][j - 1].clone()));
-            }
-        }
-        None
-    }
-
     pub fn expand_row(self: &CompressedSparseFiber<T, U>, index: usize) -> Row<T, U>
-        where T: Copy, U: Copy {
-        let val = self.vals[index];
+        where T: Copy,
+              U: Copy {
         let depth = self.fids.len();
 
         // The last row has the same length as vals
         let mut result = vec![self.fids[depth - 1][index]];
         let mut current_index = index;
-        for x in (0..depth - 1).rev() {
-            match self.dim(x, current_index) {
-                Some((new_index, node)) => {
-                    current_index = new_index;
-                    result.push(node);
-                }
-                None => ()
-            }
+        for level in (0..depth - 1).rev() {
+            let j = self.fptr[level].partition_point(|v| v <= &current_index);
+            result.push(self.fids[level][j - 1]);
+            current_index = j-1;
         }
         result.reverse();
-        (result, val)
+        (result, self.vals[index])
     }
 
     fn weights(self: &CompressedSparseFiber<T, U>, col_index: usize) -> Vec<usize> {
@@ -129,7 +118,7 @@ impl<'a, T: 'a, U> CompressedSparseFiber<T, U>
 impl<T, U> From<&SequenceTrie<U, T>> for CompressedSparseFiber<T, U>
     where T: Copy,
           U: Clone + Eq + Hash + Ord + Copy {
-   fn from(trie: &SequenceTrie<U, T, RandomState>) -> Self {
+   fn from(trie: &SequenceTrie<U, T>) -> Self {
         let mut i = vec![trie];
         let mut fids: Vec<Vec<U>> = vec![];
         let mut fptr = vec![];
@@ -169,18 +158,6 @@ impl<T, U> From<&SequenceTrie<U, T>> for CompressedSparseFiber<T, U>
     }
 }
 
-impl<T, U> From<&Rows<T, U>> for CompressedSparseFiber<T, U>
-    where T: Copy,
-          U: Clone + Eq + Hash + Ord + Copy {
-    fn from(rows: &Rows<T, U>) -> CompressedSparseFiber<T, U> {
-        let mut trie: SequenceTrie<U, T> = SequenceTrie::new();
-        for (row, x) in rows {
-            trie.insert(row, *x);
-        }
-        CompressedSparseFiber::<T, U>::from(&trie)
-    }
-}
-
 impl<T, U> Iterator for CompressedSparseFiber<T, U>
     where T: Copy,
           U: Clone + Copy {
@@ -188,7 +165,7 @@ impl<T, U> Iterator for CompressedSparseFiber<T, U>
 
     fn next(&mut self) -> Option<Row<T, U>> {
         self._state.next_index += 1;
-        if self._state.next_index <= self.vals.len() {
+        if self._state.next_index < self.vals.len() {
             Some(self.expand_row(self._state.next_index - 1))
         } else {
             None
@@ -196,6 +173,17 @@ impl<T, U> Iterator for CompressedSparseFiber<T, U>
     }
 }
 
+impl<T, U> std::iter::FromIterator<Row<T, U>> for CompressedSparseFiber<T, U>
+    where T: Copy,
+          U: Clone + Copy + Hash + Ord {
+    fn from_iter<I: IntoIterator<Item = Row<T, U>>>(iter: I) -> Self {
+        let mut trie: SequenceTrie<U, T> = SequenceTrie::new();
+        for (row, x) in iter {
+            trie.insert(&row, x);
+        }
+        CompressedSparseFiber::<T, U>::from(&trie)
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -224,8 +212,7 @@ mod tests {
 
     #[test]
     fn test_build() {
-        let rows = sample_rows();
-        let x = CompressedSparseFiber::from(&rows);
+        let x : CompressedSparseFiber<_, _> = sample_rows().into_iter().collect();
         assert_eq!(x.fids[0], vec![1, 2]);
         assert_eq!(x.fids[1], vec![1, 2, 2]);
         assert_eq!(x.fids[2], vec![1, 1, 2, 2]);
@@ -258,25 +245,7 @@ mod tests {
 
     #[test]
     fn test_iterate() {
-        let rows = sample_rows();
-        let x = CompressedSparseFiber::from(&rows);
-
-        for (vec_out, val_out) in x {
-            let (_, value) = sample_rows().into_iter()
-                .find(|(vector, _)| vector == &vec_out).unwrap();
-            assert_eq!(value, val_out);
-        }
-    }
-
-    #[test]
-    fn test_builder() {
-        let mut builder: CompressedSparseFiberBuilder<_, _> = CompressedSparseFiberBuilder::new();
-        let rows =  sample_rows();
-        for (row, v) in rows {
-            builder.rows.insert(&row, v);
-        }
-
-        let x = builder.build();
+        let x : CompressedSparseFiber<_, _> = sample_rows().into_iter().collect();
 
         for (vec_out, val_out) in x {
             let (_, value) = sample_rows().into_iter()
